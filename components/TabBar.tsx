@@ -11,7 +11,7 @@ export default function TabBar({ activeTab, overdueCount, onSelect }: Props) {
   ]
 
   return (
-    <div className="flex gap-1 px-6 pb-1">
+    <div className="flex gap-1 px-6 pb-3 border-b border-gray-800/50">
       {tabs.map(tab => (
         <button
           key={tab.id}

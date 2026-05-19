@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { TodoistTask, TodoistProject } from '@/lib/types'
 
 export function localToday(): string {
@@ -33,7 +33,6 @@ async function fetchByProject(projectId: string): Promise<TodoistTask[]> {
   const data = await res.json()
   if (data.error) throw new Error(data.error)
   const cutoff = localDatePlus(30)
-  // Keep overdue + next 30 days; no due date tasks are excluded
   return (data as TodoistTask[]).filter(t => t.due && t.due.date <= cutoff)
 }
 
@@ -51,29 +50,26 @@ export function useTaskQueue(
   const [projectTasks, setProjectTasks] = useState<TodoistTask[]>([])
   const [projectLoadingId, setProjectLoadingId] = useState<string | null>(null)
   const [queue, setQueue] = useState<TodoistTask[]>([])
-  const [skipCount, setSkipCount] = useState(0)
   const [totalSkipped, setTotalSkipped] = useState(0)
   const [isGlobalLoading, setIsGlobalLoading] = useState(true)
   const [isCompleting, setIsCompleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const globalFetched = useRef(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  // Global fetch: one call per project in parallel so no project gets crowded out
+  // Stable key from project IDs — fires when projects first load or on manual refresh
+  const projectIds = projects.map(p => p.id).join(',')
+
   useEffect(() => {
-    if (projects.length === 0 || globalFetched.current) return
-    globalFetched.current = true
+    if (!projectIds) return
     setIsGlobalLoading(true)
-
     Promise.all(projects.map(p => fetchByProject(p.id)))
-      .then(results => {
-        const combined = dedupe(results.flat())
-        setGlobalTasks(sortTasks(combined))
-      })
+      .then(results => setGlobalTasks(sortTasks(dedupe(results.flat()))))
       .catch(err => setError(err.message))
       .finally(() => setIsGlobalLoading(false))
-  }, [projects])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectIds, refreshKey])
 
-  // Per-project fetch when a project filter is selected
+  // Per-project fetch when a specific project is selected
   useEffect(() => {
     if (!activeProjectId) { setProjectTasks([]); return }
     setProjectLoadingId(activeProjectId)
@@ -88,18 +84,16 @@ export function useTaskQueue(
     const source = activeProjectId ? projectTasks : globalTasks
     const filtered = activeLabel ? source.filter(t => t.labels.includes(activeLabel)) : source
     setQueue(filtered)
-    setSkipCount(0)
   }, [globalTasks, projectTasks, activeLabel, activeProjectId])
 
   const allTasks = globalTasks
   const currentTask = queue[0] ?? null
-  const isFullySkipped = queue.length > 0 && skipCount >= queue.length
   const isLoading = isGlobalLoading || projectLoadingId !== null
 
   function handleSkip() {
     if (queue.length === 0) return
-    setQueue(q => [...q.slice(1), q[0]])
-    setSkipCount(c => c + 1)
+    // Permanently remove from session queue — don't cycle back
+    setQueue(q => q.slice(1))
     setTotalSkipped(c => c + 1)
   }
 
@@ -112,7 +106,6 @@ export function useTaskQueue(
       setQueue(q => q.slice(1))
       setGlobalTasks(all => all.filter(t => t.id !== currentTask.id))
       setProjectTasks(all => all.filter(t => t.id !== currentTask.id))
-      setSkipCount(0)
       onSuccess?.()
     } catch {
       setError('Could not complete task — please try again')
@@ -126,11 +119,15 @@ export function useTaskQueue(
     setProjectTasks(all => all.filter(t => t.id !== id))
   }
 
+  function refreshAll() {
+    setRefreshKey(k => k + 1)
+  }
+
   function clearError() { setError(null) }
 
   return {
     currentTask, queue, allTasks,
-    isLoading, isCompleting, isFullySkipped, totalSkipped,
-    error, handleSkip, handleDone, removeTask, clearError,
+    isLoading, isCompleting, totalSkipped,
+    error, handleSkip, handleDone, removeTask, refreshAll, clearError,
   }
 }

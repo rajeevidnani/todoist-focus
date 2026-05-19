@@ -75,7 +75,7 @@ function OverdueRow({
           <input
             type="date"
             value={customDate}
-            min={new Date().toISOString().split('T')[0]}
+            min={(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })()}
             onChange={e => setCustomDate(e.target.value)}
             className="text-xs bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1.5 focus:outline-none focus:border-gray-500"
           />

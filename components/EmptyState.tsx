@@ -7,23 +7,21 @@ interface Props {
 }
 
 export default function EmptyState({ activeLabel, activeProjectId, projects }: Props) {
-  let message = 'No tasks due today or overdue'
-  if (activeLabel) message = `No tasks with label "${activeLabel}" for today`
+  let message = 'No upcoming tasks in the next 30 days'
+  if (activeLabel) message = `No upcoming tasks with label "${activeLabel}"`
   if (activeProjectId) {
     const name = projects.find(p => p.id === activeProjectId)?.name ?? 'this project'
-    message = `No tasks in "${name}" for today`
+    message = `No upcoming tasks in "${name}"`
+  }
+  if (activeLabel && activeProjectId) {
+    const name = projects.find(p => p.id === activeProjectId)?.name ?? 'this project'
+    message = `No upcoming tasks in "${name}" with label "${activeLabel}"`
   }
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
       <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
-        <svg
-          className="w-8 h-8 text-emerald-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
+        <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
         </svg>
       </div>

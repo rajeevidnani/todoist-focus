@@ -29,7 +29,7 @@ export default function ActionButtons({ onDone, onSkip, isLoading }: Props) {
       <button
         onClick={onDone}
         disabled={isLoading}
-        className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-900 disabled:text-emerald-600 text-white rounded-xl px-6 py-3 font-semibold transition-colors flex items-center justify-center gap-2"
+        className="flex-[2] bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-900 disabled:text-emerald-600 text-white rounded-xl px-6 py-3 font-semibold transition-colors flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>
@@ -39,7 +39,7 @@ export default function ActionButtons({ onDone, onSkip, isLoading }: Props) {
         ) : (
           <>
             <span>Done</span>
-            <span className="text-emerald-300 text-xs font-normal opacity-70">D</span>
+            <span className="text-emerald-300 text-xs font-normal opacity-90">D</span>
           </>
         )}
       </button>
@@ -49,7 +49,7 @@ export default function ActionButtons({ onDone, onSkip, isLoading }: Props) {
         className="flex-1 border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white disabled:opacity-40 rounded-xl px-6 py-3 transition-colors flex items-center justify-center gap-2"
       >
         <span>Skip</span>
-        <span className="text-gray-500 text-xs font-normal">S</span>
+        <span className="text-gray-500 text-xs font-normal opacity-90">S</span>
       </button>
     </div>
   )

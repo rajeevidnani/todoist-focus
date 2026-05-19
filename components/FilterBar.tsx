@@ -185,6 +185,16 @@ export default function FilterBar({
               </svg>
             }
           />
+          <button
+            onClick={() => onSelectLabel(null)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeLabel === null
+                ? 'bg-white text-gray-950'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            All
+          </button>
           <DraggableRow
             items={orderedLabels}
             activeId={activeLabel}
