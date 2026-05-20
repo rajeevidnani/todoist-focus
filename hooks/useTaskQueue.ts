@@ -8,11 +8,6 @@ export function localToday(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function localDatePlus(days: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 export function sortTasks(tasks: TodoistTask[]): TodoistTask[] {
   return [...tasks].sort((a, b) => {
@@ -33,8 +28,7 @@ async function fetchByProject(projectId: string): Promise<TodoistTask[]> {
   const res = await fetch(`/api/tasks?project_id=${projectId}&limit=200`)
   const data = await res.json()
   if (data.error) throw new Error(data.error)
-  const cutoff = localDatePlus(30)
-  return (data as TodoistTask[]).filter(t => t.due && t.due.date <= cutoff)
+  return data as TodoistTask[]
 }
 
 function dedupe(tasks: TodoistTask[]): TodoistTask[] {
