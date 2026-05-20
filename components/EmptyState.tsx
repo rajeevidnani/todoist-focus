@@ -1,23 +1,8 @@
-import { TodoistProject } from '@/lib/types'
-
 interface Props {
-  activeLabel: string | null
-  activeProjectId: string | null
-  projects: TodoistProject[]
+  hasFilters: boolean
 }
 
-export default function EmptyState({ activeLabel, activeProjectId, projects }: Props) {
-  let message = 'No upcoming tasks in the next 30 days'
-  if (activeLabel) message = `No upcoming tasks with label "${activeLabel}"`
-  if (activeProjectId) {
-    const name = projects.find(p => p.id === activeProjectId)?.name ?? 'this project'
-    message = `No upcoming tasks in "${name}"`
-  }
-  if (activeLabel && activeProjectId) {
-    const name = projects.find(p => p.id === activeProjectId)?.name ?? 'this project'
-    message = `No upcoming tasks in "${name}" with label "${activeLabel}"`
-  }
-
+export default function EmptyState({ hasFilters }: Props) {
   return (
     <div className="flex flex-col items-center gap-4 text-center">
       <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
@@ -27,7 +12,9 @@ export default function EmptyState({ activeLabel, activeProjectId, projects }: P
       </div>
       <div>
         <h2 className="text-white text-xl font-medium mb-1">All caught up</h2>
-        <p className="text-gray-500 text-sm">{message}</p>
+        <p className="text-gray-500 text-sm">
+          {hasFilters ? 'No upcoming tasks match your current filters' : 'No upcoming tasks in the next 30 days'}
+        </p>
       </div>
     </div>
   )

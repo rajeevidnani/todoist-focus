@@ -1,3 +1,4 @@
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { TodoistTask, TodoistProject } from '@/lib/types'
 import PriorityDot from './PriorityDot'
 
@@ -5,6 +6,8 @@ interface Props {
   task: TodoistTask
   queueLength: number
   projects: TodoistProject[]
+  animState?: 'idle' | 'done' | 'skip'
+  skipEmojis?: string[]
 }
 
 function localToday(): string {
@@ -45,20 +48,46 @@ function bucketLabel(dateStr: string): { text: string; className: string } {
   return { text: label, className: 'text-gray-400' }
 }
 
-export default function TaskCard({ task, queueLength, projects }: Props) {
+const DEFAULT_TAUNTS = ['🙄', '😬', '👀', '💀', '🫠']
+
+export default function TaskCard({ task, queueLength, projects, animState = 'idle', skipEmojis }: Props) {
   const overdue = task.due ? task.due.date < localToday() : false
   const bucket = task.due ? bucketLabel(task.due.date) : null
   const projectName = projects.find(p => p.id === task.project_id)?.name ?? null
+  const taunts = skipEmojis && skipEmojis.length > 0 ? skipEmojis : DEFAULT_TAUNTS
+  const taunt = taunts[Math.floor(Math.random() * taunts.length)]
+
+  const exitClass = animState === 'done' ? 'task-done-exit' : animState === 'skip' ? 'task-skip-exit' : ''
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className={`w-full max-w-xl mx-auto ${exitClass}`}>
       {bucket && (
         <p className={`text-xs font-semibold uppercase tracking-widest mb-3 text-center ${bucket.className}`}>
           {bucket.text}
         </p>
       )}
 
-      <div className="task-enter bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+      <div className="relative task-enter bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+        {animState === 'done' && (
+          <div
+            className="absolute inset-0 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(5, 20, 10, 0.82)' }}
+            aria-hidden
+          >
+            <DotLottieReact
+              src="/success.lottie"
+              autoplay
+              loop={false}
+              backgroundColor="transparent"
+              style={{ width: '260px', height: '260px' }}
+            />
+          </div>
+        )}
+        {animState === 'skip' && (
+          <div className="skip-overlay" aria-hidden>
+            <span className="skip-emoji-big">{taunt}</span>
+          </div>
+        )}
         <div className="flex items-start gap-3 mb-4">
           <div className="mt-2">
             <PriorityDot priority={task.priority} />
@@ -95,7 +124,7 @@ export default function TaskCard({ task, queueLength, projects }: Props) {
         </div>
 
         <div className="mt-5 pt-4 border-t border-gray-800 flex items-center justify-between">
-          <span className="text-gray-600 text-xs">{queueLength} remaining</span>
+          <span className="text-gray-600 text-xs">{queueLength} tasks</span>
           {projectName && (
             <span className="text-gray-600 text-xs">{projectName}</span>
           )}

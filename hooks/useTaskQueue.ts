@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TodoistTask, TodoistProject } from '@/lib/types'
 
 export function localToday(): string {
@@ -20,11 +20,12 @@ export function sortTasks(tasks: TodoistTask[]): TodoistTask[] {
     const bDate = b.due?.date ?? '9999-99-99'
     if (aDate !== bDate) return aDate < bDate ? -1 : 1
 
+    // priority: API stores P1=4, P4=1 — sort descending so P1 comes first
+    if (b.priority !== a.priority) return b.priority - a.priority
+
     const aDayOrder = a.day_order === -1 ? Infinity : a.day_order
     const bDayOrder = b.day_order === -1 ? Infinity : b.day_order
-    if (aDayOrder !== bDayOrder) return aDayOrder - bDayOrder
-
-    return a.child_order - b.child_order
+    return aDayOrder - bDayOrder
   })
 }
 
@@ -42,13 +43,12 @@ function dedupe(tasks: TodoistTask[]): TodoistTask[] {
 }
 
 export function useTaskQueue(
-  activeLabel: string | null,
-  activeProjectId: string | null,
+  selectedProjectIds: Set<string>,
+  selectedLabelNames: Set<string>,
+  selectedPriorities: Set<number>,
   projects: TodoistProject[],
 ) {
   const [globalTasks, setGlobalTasks] = useState<TodoistTask[]>([])
-  const [projectTasks, setProjectTasks] = useState<TodoistTask[]>([])
-  const [projectLoadingId, setProjectLoadingId] = useState<string | null>(null)
   const [queue, setQueue] = useState<TodoistTask[]>([])
   const [totalSkipped, setTotalSkipped] = useState(0)
   const [isGlobalLoading, setIsGlobalLoading] = useState(true)
@@ -56,12 +56,16 @@ export function useTaskQueue(
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  // Stable key from project IDs — fires when projects first load or on manual refresh
+  // Tracks IDs that have been skipped this session so the derivation
+  // effect always pushes them to the back of the queue.
+  const skippedIdsRef = useRef(new Set<string>())
+
   const projectIds = projects.map(p => p.id).join(',')
 
   useEffect(() => {
     if (!projectIds) return
     setIsGlobalLoading(true)
+    skippedIdsRef.current = new Set()  // clear skip memory on refresh
     Promise.all(projects.map(p => fetchByProject(p.id)))
       .then(results => setGlobalTasks(sortTasks(dedupe(results.flat()))))
       .catch(err => setError(err.message))
@@ -69,31 +73,29 @@ export function useTaskQueue(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectIds, refreshKey])
 
-  // Per-project fetch when a specific project is selected
+  // Derive queue from globalTasks + active filters.
+  // Reads skippedIdsRef (not state) so this effect only re-runs when
+  // tasks or filters change — not on every skip.
   useEffect(() => {
-    if (!activeProjectId) { setProjectTasks([]); return }
-    setProjectLoadingId(activeProjectId)
-    fetchByProject(activeProjectId)
-      .then(tasks => setProjectTasks(sortTasks(tasks)))
-      .catch(err => setError(err.message))
-      .finally(() => setProjectLoadingId(null))
-  }, [activeProjectId])
-
-  // Derive queue from correct source
-  useEffect(() => {
-    const source = activeProjectId ? projectTasks : globalTasks
-    const filtered = activeLabel ? source.filter(t => t.labels.includes(activeLabel)) : source
-    setQueue(filtered)
-  }, [globalTasks, projectTasks, activeLabel, activeProjectId])
+    const filtered = globalTasks
+      .filter(t => selectedProjectIds.size === 0 || selectedProjectIds.has(t.project_id))
+      .filter(t => selectedLabelNames.size === 0 || t.labels.some(l => selectedLabelNames.has(l)))
+      .filter(t => selectedPriorities.size === 0 || selectedPriorities.has(t.priority))
+    const skipped = skippedIdsRef.current
+    setQueue([
+      ...filtered.filter(t => !skipped.has(t.id)),
+      ...filtered.filter(t => skipped.has(t.id)),
+    ])
+  }, [globalTasks, selectedProjectIds, selectedLabelNames, selectedPriorities])
 
   const allTasks = globalTasks
   const currentTask = queue[0] ?? null
-  const isLoading = isGlobalLoading || projectLoadingId !== null
+  const isLoading = isGlobalLoading
 
   function handleSkip() {
     if (queue.length === 0) return
-    // Permanently remove from session queue — don't cycle back
-    setQueue(q => q.slice(1))
+    skippedIdsRef.current = new Set([...skippedIdsRef.current, queue[0].id])
+    setQueue(q => [...q.slice(1), q[0]])
     setTotalSkipped(c => c + 1)
   }
 
@@ -103,9 +105,9 @@ export function useTaskQueue(
     try {
       const res = await fetch(`/api/tasks/${currentTask.id}/close`, { method: 'POST' })
       if (!res.ok) throw new Error('Failed to complete task')
+      skippedIdsRef.current.delete(currentTask.id)
       setQueue(q => q.slice(1))
       setGlobalTasks(all => all.filter(t => t.id !== currentTask.id))
-      setProjectTasks(all => all.filter(t => t.id !== currentTask.id))
       onSuccess?.()
     } catch {
       setError('Could not complete task — please try again')
@@ -116,7 +118,22 @@ export function useTaskQueue(
 
   function removeTask(id: string) {
     setGlobalTasks(all => all.filter(t => t.id !== id))
-    setProjectTasks(all => all.filter(t => t.id !== id))
+  }
+
+  async function rescheduleTask(id: string, date: string) {
+    try {
+      const res = await fetch(`/api/tasks/${id}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date }),
+      })
+      if (!res.ok) throw new Error('Failed to reschedule')
+      skippedIdsRef.current.delete(id)
+      setQueue(q => q.filter(t => t.id !== id))
+      setGlobalTasks(all => all.filter(t => t.id !== id))
+    } catch {
+      setError('Could not reschedule task — please try again')
+    }
   }
 
   function refreshAll() {
@@ -128,6 +145,6 @@ export function useTaskQueue(
   return {
     currentTask, queue, allTasks,
     isLoading, isCompleting, totalSkipped,
-    error, handleSkip, handleDone, removeTask, refreshAll, clearError,
+    error, handleSkip, handleDone, removeTask, rescheduleTask, refreshAll, clearError,
   }
 }

@@ -4,6 +4,99 @@
   --font-sans: var(--font-geist);
 }
 
+/* ── Light theme ─────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --color-gray-950: #f0f0f0;
+  --color-gray-900: #ffffff;
+  --color-gray-800: #e5e7eb;
+  --color-gray-700: #d1d5db;
+  --color-gray-600: #6b7280;
+  --color-gray-500: #9ca3af;
+  --color-gray-400: #374151;
+  --color-gray-300: #1f2937;
+  --color-gray-200: #111827;
+  --color-white: #111827;
+  --color-gray-950-text: #f0f0f0;
+}
+
+[data-theme="light"] .text-white { color: #111827; }
+[data-theme="light"] .text-gray-950 { color: #f0f0f0; }
+[data-theme="light"] .bg-white { background-color: #f0f0f0; }
+[data-theme="light"] .bg-gray-950 { background-color: #f0f0f0; }
+[data-theme="light"] .border-gray-800 { border-color: #d1d5db; }
+[data-theme="light"] .border-gray-800\/50 { border-color: rgba(209,213,219,0.5); }
+[data-theme="light"] .divide-gray-800\/50 > * + * { border-color: rgba(209,213,219,0.5); }
+[data-theme="light"] .bg-gray-800\/40 { background-color: rgba(229,231,235,0.6); }
+[data-theme="light"] .bg-gray-800\/50 { background-color: rgba(229,231,235,0.5); }
+[data-theme="light"] .hover\:bg-gray-800:hover { background-color: #e5e7eb; }
+[data-theme="light"] .hover\:bg-gray-800\/50:hover { background-color: rgba(229,231,235,0.5); }
+
+/* selected pill in light mode: dark chip */
+[data-theme="light"] .bg-white.text-gray-950 {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+
+/* ── Todoist theme (dark — matches Todoist's actual dark mode) ───── */
+[data-theme="todoist"] {
+  --color-gray-950: #1f1f1f;
+  --color-gray-900: #282828;
+  --color-gray-800: #3d3d3d;
+  --color-gray-700: #4a4a4a;
+  --color-gray-600: #808080;
+  --color-gray-500: #999999;
+  --color-gray-400: #b0b0b0;
+  --color-gray-300: #d0d0d0;
+  --color-gray-200: #ffffff;
+}
+
+[data-theme="todoist"] .text-white { color: #ffffff; }
+[data-theme="todoist"] .bg-gray-950 { background-color: #1f1f1f; }
+[data-theme="todoist"] .bg-gray-900 { background-color: #282828; }
+[data-theme="todoist"] .border-gray-800 { border-color: #3d3d3d; }
+[data-theme="todoist"] .border-gray-800\/50 { border-color: rgba(61,61,61,0.5); }
+[data-theme="todoist"] .divide-gray-800\/50 > * + * { border-color: rgba(61,61,61,0.5); }
+[data-theme="todoist"] .bg-gray-800\/40 { background-color: rgba(61,61,61,0.4); }
+[data-theme="todoist"] .bg-gray-800\/50 { background-color: rgba(61,61,61,0.5); }
+[data-theme="todoist"] .hover\:bg-gray-800:hover { background-color: #3d3d3d; }
+[data-theme="todoist"] .hover\:bg-gray-800\/50:hover { background-color: rgba(61,61,61,0.5); }
+
+/* selected pill: Todoist red */
+[data-theme="todoist"] .bg-white.text-gray-950 {
+  background-color: #db4035 !important;
+  color: #ffffff !important;
+}
+
+/* Done button: Todoist green */
+[data-theme="todoist"] .bg-emerald-600 { background-color: #058527; }
+[data-theme="todoist"] .hover\:bg-emerald-500:hover { background-color: #067a24; }
+
+/* Buttons with colored backgrounds should always have white text */
+[data-theme="light"] .bg-emerald-600,
+[data-theme="todoist"] .bg-emerald-600 {
+  color: #ffffff;
+}
+[data-theme="light"] button.bg-emerald-600 .text-emerald-300,
+[data-theme="todoist"] button.bg-emerald-600 .text-emerald-300 {
+  color: rgba(255,255,255,0.7);
+}
+
+/* Skip button in light modes */
+[data-theme="light"] .border-gray-700,
+[data-theme="todoist"] .border-gray-700 {
+  border-color: #d1d5db;
+}
+[data-theme="light"] .hover\:border-gray-500:hover,
+[data-theme="todoist"] .hover\:border-gray-500:hover {
+  border-color: #9ca3af;
+}
+
+/* Skip overlay: lighter for light backgrounds */
+[data-theme="light"] .skip-overlay,
+[data-theme="todoist"] .skip-overlay {
+  background: rgba(0,0,0,0.55);
+}
+
 /* Hide scrollbar for label pills row */
 .scrollbar-none {
   scrollbar-width: none;
@@ -21,7 +114,55 @@
   animation: fade-in 0.18s ease-out both;
 }
 
-/* Done count pop animation — triggered by key change */
+/* ── Task exit animations ───────────────────────────────────────── */
+
+/* Done: card holds still while Lottie plays (~1s), brief hold, then exits */
+@keyframes task-done-exit {
+  0%   { transform: scale(1) translateY(0); opacity: 1; }
+  82%  { transform: scale(1) translateY(0); opacity: 1; }
+  91%  { transform: scale(1.03) translateY(-6px); opacity: 0.6; }
+  100% { transform: scale(0.96) translateY(-70px); opacity: 0; }
+}
+.task-done-exit { animation: task-done-exit 1.6s ease-in forwards; }
+
+/* Skip: just fade out, no movement */
+@keyframes task-skip-exit {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.task-skip-exit { animation: task-skip-exit 0.72s ease-out forwards; }
+
+/* Skip emoji — full-card overlay */
+@keyframes skip-overlay-in {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes skip-emoji-pop {
+  0%   { transform: scale(0.2) rotate(-20deg); opacity: 0; }
+  20%  { transform: scale(1.25) rotate( 6deg); opacity: 1; }
+  38%  { transform: scale(0.92) rotate(-3deg); opacity: 1; }
+  55%  { transform: scale(1.05) rotate( 1deg); opacity: 1; }
+  75%  { transform: scale(1.0)  rotate( 0deg); opacity: 1; }
+  100% { transform: scale(1.1)  rotate( 2deg); opacity: 0; }
+}
+.skip-overlay {
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  animation: skip-overlay-in 0.72s ease-out forwards;
+}
+.skip-emoji-big {
+  font-size: 7rem;
+  line-height: 1;
+  animation: skip-emoji-pop 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Done count pop animation — triggered by key change ─────────── */
 @keyframes count-pop {
   0%   { transform: scale(1); }
   40%  { transform: scale(1.35); color: #34d399; }
