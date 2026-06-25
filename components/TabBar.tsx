@@ -1,13 +1,16 @@
+export type Tab = 'focus' | 'overdue' | 'analytics'
+
 interface Props {
-  activeTab: 'focus' | 'overdue'
+  activeTab: Tab
   overdueCount: number
-  onSelect: (tab: 'focus' | 'overdue') => void
+  onSelect: (tab: Tab) => void
 }
 
 export default function TabBar({ activeTab, overdueCount, onSelect }: Props) {
-  const tabs: { id: 'focus' | 'overdue'; label: string; badge?: number }[] = [
+  const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'focus', label: 'Focus' },
     { id: 'overdue', label: 'Overdue', badge: overdueCount || undefined },
+    { id: 'analytics', label: 'Analytics' },
   ]
 
   return (

@@ -12,8 +12,12 @@ import ActionButtons from './ActionButtons'
 import FilterBar from './FilterBar'
 import StatsWidget from './StatsWidget'
 import EmptyState from './EmptyState'
-import TabBar from './TabBar'
+import { Tab } from './TabBar'
 import OverdueManager from './OverdueManager'
+import PomodoroTimer from './PomodoroTimer'
+import YearProgress from './YearProgress'
+import WeekendsLeft from './WeekendsLeft'
+import AnalyticsView from './AnalyticsView'
 
 const THEMES: { value: import('@/hooks/useTheme').Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
@@ -22,13 +26,14 @@ const THEMES: { value: import('@/hooks/useTheme').Theme; label: string }[] = [
 ]
 
 export default function FocusView() {
-  const [activeTab, setActiveTab] = useState<'focus' | 'overdue'>('focus')
+  const [activeTab, setActiveTab] = useState<Tab>('focus')
   const [themeOpen, setThemeOpen] = useState(false)
   const [theme, pickTheme] = useTheme()
   const { active: skipEmojis, toggle: toggleEmoji } = useSkipEmojis()
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set())
   const [selectedLabelNames, setSelectedLabelNames] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(new Set())
+  const [hideWaiting, setHideWaiting] = useState(false)
   const [animState, setAnimState] = useState<'idle' | 'done' | 'skip'>('idle')
 
   const { labels } = useLabels()
@@ -48,7 +53,7 @@ export default function FocusView() {
     rescheduleTask,
     refreshAll,
     clearError,
-  } = useTaskQueue(selectedProjectIds, selectedLabelNames, selectedPriorities, projects)
+  } = useTaskQueue(selectedProjectIds, selectedLabelNames, selectedPriorities, projects, hideWaiting)
 
   const today = localToday()
   const overdueCount = allTasks.filter(t => t.due && t.due.date < today).length
@@ -107,13 +112,41 @@ export default function FocusView() {
   const hasFilters = selectedProjectIds.size > 0 || selectedLabelNames.size > 0 || selectedPriorities.size > 0
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col" data-theme={theme}>
-      <header className="px-6 pt-8 pb-4 flex items-start justify-between">
+    <div className="h-screen overflow-hidden bg-gray-950 flex flex-col" data-theme={theme}>
+      <header className="px-6 pt-8 pb-4 flex items-start justify-between flex-shrink-0">
         <div>
           <h1 className="text-white text-xl font-semibold tracking-tight">One Task View</h1>
           <p className="text-gray-500 text-sm mt-0.5">The focus is on getting shit done — not dopamine from looking at tasks</p>
         </div>
         <div className="flex items-center gap-1 mt-1">
+          {/* Tab nav */}
+          <div className="flex items-center gap-0.5 mr-1">
+            {([
+              { id: 'focus' as Tab, label: 'Focus' },
+              { id: 'overdue' as Tab, label: 'Overdue', badge: overdueCount || undefined },
+              { id: 'analytics' as Tab, label: 'Analytics' },
+            ]).map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  activeTab === t.id
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-600 hover:text-gray-300 hover:bg-gray-800'
+                }`}
+              >
+                {t.label}
+                {t.badge != null && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    activeTab === t.id ? 'bg-red-500/30 text-red-300' : 'bg-gray-700 text-gray-400'
+                  }`}>
+                    {t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
           {/* Theme dropdown */}
           <div className="relative">
             <button
@@ -158,76 +191,112 @@ export default function FocusView() {
         </div>
       </header>
 
-      <div className="flex-1 flex min-h-0">
-
-        {/* Main content: task on top, filters + tabs pinned to bottom */}
-        <div className="flex-[2] min-w-0 flex flex-col min-h-0">
-          <div className="flex-1 flex flex-col items-center pt-8 px-4 overflow-y-auto">
-            {error && (
-              <div className="w-full max-w-xl mb-4 bg-red-950/50 border border-red-800 text-red-300 rounded-xl px-4 py-3 text-sm flex items-center justify-between">
-                <span>{error}</span>
-                <button onClick={clearError} className="text-red-400 hover:text-red-200 ml-4 text-lg leading-none">×</button>
-              </div>
-            )}
-
-            {activeTab === 'overdue' ? (
-              <OverdueManager allTasks={allTasks} onReschedule={removeTask} />
-            ) : isLoading ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-8 h-8 border-2 border-gray-700 border-t-white rounded-full animate-spin" />
-                <span className="text-gray-500 text-sm">Loading tasks…</span>
-              </div>
-            ) : currentTask ? (
-              <>
-                <TaskCard
-                  key={currentTask.id}
-                  task={currentTask}
-                  queueLength={allTasks.length}
-                  projects={projects}
-                  animState={animState}
-                  skipEmojis={skipEmojis}
-                />
-                <ActionButtons
-                  onDone={onDone}
-                  onSkip={onSkip}
-                  onReschedule={onReschedule}
-                  isLoading={isCompleting || animState !== 'idle'}
-                  activeEmojis={skipEmojis}
-                  onToggleEmoji={toggleEmoji}
-                />
-              </>
-            ) : (
-              <EmptyState hasFilters={hasFilters} />
-            )}
-          </div>
-
-          {activeTab === 'focus' && (
-            <FilterBar
-              projects={projects}
-              labels={labels}
-              selectedProjectIds={selectedProjectIds}
-              selectedLabelNames={selectedLabelNames}
-              selectedPriorities={selectedPriorities}
-              onToggleProject={toggleProject}
-              onToggleLabel={toggleLabel}
-              onTogglePriority={togglePriority}
-            />
+      {activeTab === 'analytics' ? (
+        /* Analytics — full width, no side panels */
+        <div className="flex-1 overflow-y-auto pt-6 px-6 min-h-0">
+          {error && (
+            <div className="w-full max-w-5xl mx-auto mb-4 bg-red-950/50 border border-red-800 text-red-300 rounded-xl px-4 py-3 text-sm flex items-center justify-between">
+              <span>{error}</span>
+              <button onClick={clearError} className="text-red-400 hover:text-red-200 ml-4 text-lg leading-none">×</button>
+            </div>
           )}
-          <TabBar activeTab={activeTab} overdueCount={overdueCount} onSelect={setActiveTab} />
-        </div>
-
-        {/* Stats panel */}
-        <div className="w-52 flex-shrink-0 border-l border-gray-800/50 p-4 flex flex-col">
-          <StatsWidget
+          <AnalyticsView
             stats={stats}
             isLoading={statsLoading}
             totalSkipped={totalSkipped}
-            queueLength={queue.length}
             allTasks={allTasks}
             projects={projects}
           />
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 flex min-h-0">
+
+          {/* Left panel */}
+          <div className="w-52 flex-shrink-0 border-r border-gray-800/50 p-4 flex flex-col gap-3 overflow-y-auto scrollbar-none">
+            <PomodoroTimer />
+            <YearProgress />
+            <WeekendsLeft />
+          </div>
+
+          {/* Main content: task on top, filters hugging the bottom */}
+          <div className="flex-[2] min-w-0 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col items-center pt-6 px-4 min-h-0 overflow-y-auto scrollbar-none">
+              {error && (
+                <div className="w-full max-w-xl mb-4 bg-red-950/50 border border-red-800 text-red-300 rounded-xl px-4 py-3 text-sm flex items-center justify-between">
+                  <span>{error}</span>
+                  <button onClick={clearError} className="text-red-400 hover:text-red-200 ml-4 text-lg leading-none">×</button>
+                </div>
+              )}
+
+              {activeTab === 'overdue' ? (
+                <OverdueManager allTasks={allTasks} onReschedule={removeTask} />
+              ) : isLoading ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-8 h-8 border-2 border-gray-700 border-t-white rounded-full animate-spin" />
+                  <span className="text-gray-500 text-sm">Loading tasks…</span>
+                </div>
+              ) : currentTask ? (
+                <>
+                  <TaskCard
+                    key={currentTask.id}
+                    task={currentTask}
+                    queueLength={allTasks.length}
+                    projects={projects}
+                    animState={animState}
+                    skipEmojis={skipEmojis}
+                  />
+                  <ActionButtons
+                    onDone={onDone}
+                    onSkip={onSkip}
+                    onReschedule={onReschedule}
+                    isLoading={isCompleting || animState !== 'idle'}
+                    activeEmojis={skipEmojis}
+                    onToggleEmoji={toggleEmoji}
+                  />
+                  <button
+                    onClick={() => setHideWaiting(v => !v)}
+                    className={`mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      hideWaiting
+                        ? 'bg-gray-800 text-gray-300 hover:text-white'
+                        : 'text-gray-600 hover:text-gray-400'
+                    }`}
+                    title="Toggle whether really_waiting tasks appear in the queue"
+                  >
+                    {hideWaiting ? '🙈 really_waiting hidden' : '👀 really_waiting showing'}
+                  </button>
+                </>
+              ) : (
+                <EmptyState hasFilters={hasFilters} />
+              )}
+            </div>
+
+            {activeTab === 'focus' && (
+              <FilterBar
+                projects={projects}
+                labels={labels}
+                selectedProjectIds={selectedProjectIds}
+                selectedLabelNames={selectedLabelNames}
+                selectedPriorities={selectedPriorities}
+                onToggleProject={toggleProject}
+                onToggleLabel={toggleLabel}
+                onTogglePriority={togglePriority}
+              />
+            )}
+          </div>
+
+          {/* Stats panel */}
+          <div className="w-52 flex-shrink-0 border-l border-gray-800/50 p-4 flex flex-col overflow-y-auto scrollbar-none">
+            <StatsWidget
+              stats={stats}
+              isLoading={statsLoading}
+              totalSkipped={totalSkipped}
+              queueLength={queue.length}
+              allTasks={allTasks}
+              projects={projects}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

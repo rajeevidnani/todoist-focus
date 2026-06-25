@@ -32,10 +32,31 @@ export interface TodoistLabel {
   order: number
 }
 
+export interface DayCompletion {
+  date: string
+  total: number
+}
+
+export interface WeekCompletion {
+  from: string
+  to: string
+  total: number
+}
+
 export interface ProductivityStats {
   karma: number
   karma_trend: 'up' | 'down' | ''
   completed_today: number
+  daily_goal: number
+  weekly_goal: number
+  completed_this_week: number
+  completed_total: number
+  current_daily_streak: number
+  max_daily_streak: number
+  current_weekly_streak: number
+  days: DayCompletion[]   // last 7, chronological (oldest first)
+  weeks: WeekCompletion[] // last 4, chronological (oldest first)
+  // legacy fields kept for StatsWidget
   current_streak: number
   goal_completed: boolean
 }

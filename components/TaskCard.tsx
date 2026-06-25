@@ -92,7 +92,7 @@ export default function TaskCard({ task, queueLength, projects, animState = 'idl
           <div className="mt-2">
             <PriorityDot priority={task.priority} />
           </div>
-          <h1 className="text-2xl font-medium text-white leading-snug">{task.content}</h1>
+          <h1 className="text-lg font-medium text-white leading-snug">{task.content}</h1>
         </div>
 
         {task.description && (

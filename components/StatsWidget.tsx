@@ -24,7 +24,7 @@ export default function StatsWidget({ stats, isLoading, totalSkipped, queueLengt
     t => !t.labels.includes(RECURRING_LABEL) && !t.labels.includes(WAITING_LABEL)
   ).length
 
-  const logEntries = useDailyLog(isLoading ? null : focusCount)
+  const logEntries = useDailyLog(isLoading ? null : focusCount, done)
 
   const projectCounts = projects
     .map(p => ({
@@ -44,9 +44,6 @@ export default function StatsWidget({ stats, isLoading, totalSkipped, queueLengt
           <div key={done} className="text-3xl font-bold text-white tabular-nums count-pop">
             {isLoading ? '—' : done}
           </div>
-          {(stats?.current_streak ?? 0) > 0 && (
-            <p className="text-orange-400 text-xs mt-1">🔥 {stats!.current_streak} day streak</p>
-          )}
         </div>
         <div className="text-right">
           <span className="text-gray-600 text-xs">skipped</span>

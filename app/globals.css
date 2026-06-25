@@ -4,6 +4,13 @@
   --font-sans: var(--font-geist);
 }
 
+/* Year-progress dot colors (dark default; overridden per theme) */
+:root {
+  --yp-past: #a78bfa;
+  --yp-today: #ffffff;
+  --yp-future: #312e44;
+}
+
 /* ── Light theme ─────────────────────────────────────────────────── */
 [data-theme="light"] {
   --color-gray-950: #f0f0f0;
@@ -17,6 +24,10 @@
   --color-gray-200: #111827;
   --color-white: #111827;
   --color-gray-950-text: #f0f0f0;
+  /* year-progress: lighter on a light background */
+  --yp-past: #8b5cf6;
+  --yp-today: #4c1d95;
+  --yp-future: #d8d4e8;
 }
 
 [data-theme="light"] .text-white { color: #111827; }
