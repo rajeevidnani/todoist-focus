@@ -43,7 +43,7 @@ export default function MobileStats({ stats, isLoading, totalSkipped, allTasks }
 
       {/* Trend */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl px-4 py-4">
-        <TrendGraph entries={logEntries} vw={320} />
+        <TrendGraph entries={logEntries} vw={200} />
       </div>
     </div>
   )

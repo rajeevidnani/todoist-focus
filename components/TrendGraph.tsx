@@ -15,7 +15,7 @@ function formatShortDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default function TrendGraph({ entries, showAdded = true, height = 88, vw = 280 }: Props) {
+export default function TrendGraph({ entries, showAdded = true, height = 88, vw = 160 }: Props) {
   const [hover, setHover] = useState<number | null>(null)
 
   if (entries.length < 2) {
@@ -28,7 +28,7 @@ export default function TrendGraph({ entries, showAdded = true, height = 88, vw 
 
   const W = vw
   const H = height
-  const PAD = { top: 22, right: 12, bottom: 18, left: 30 }
+  const PAD = { top: 24, right: 8, bottom: 18, left: 26 }
   const innerW = W - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
 
@@ -113,7 +113,7 @@ export default function TrendGraph({ entries, showAdded = true, height = 88, vw 
                 y={p.y - 6}
                 textAnchor="middle"
                 dominantBaseline="auto"
-                fontSize="9"
+                fontSize="11"
                 fontWeight={isLast ? '700' : '500'}
                 fill={isLast ? trendColor : '#9ca3af'}
               >
