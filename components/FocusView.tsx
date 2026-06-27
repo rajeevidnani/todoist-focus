@@ -114,7 +114,7 @@ export default function FocusView() {
 
   return (
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-gray-950 flex flex-col" data-theme={theme}>
-      <header className="px-4 md:px-6 pt-6 md:pt-8 pb-3 md:pb-4 flex items-start justify-between flex-shrink-0">
+      <header className="px-4 md:px-6 pt-6 md:pt-8 pb-3 md:pb-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           {/* Logo */}
           <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
@@ -128,7 +128,7 @@ export default function FocusView() {
             <p className="text-gray-500 text-sm mt-0.5">The focus is on getting shit done — not dopamine from looking at tasks</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 mt-1">
+        <div className="flex items-center gap-1">
           {/* Tab nav */}
           <div className="flex items-center gap-0.5 mr-1">
             {([
