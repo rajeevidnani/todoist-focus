@@ -18,6 +18,7 @@ import PomodoroTimer from './PomodoroTimer'
 import YearProgress from './YearProgress'
 import WeekendsLeft from './WeekendsLeft'
 import AnalyticsView from './AnalyticsView'
+import MobileStats from './MobileStats'
 
 const THEMES: { value: import('@/hooks/useTheme').Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
@@ -112,11 +113,11 @@ export default function FocusView() {
   const hasFilters = selectedProjectIds.size > 0 || selectedLabelNames.size > 0 || selectedPriorities.size > 0
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-950 flex flex-col" data-theme={theme}>
-      <header className="px-6 pt-8 pb-4 flex items-start justify-between flex-shrink-0">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-gray-950 flex flex-col" data-theme={theme}>
+      <header className="px-4 md:px-6 pt-6 md:pt-8 pb-3 md:pb-4 flex items-start justify-between flex-shrink-0">
         <div>
           <h1 className="text-white text-xl font-semibold tracking-tight">One Task View</h1>
-          <p className="text-gray-500 text-sm mt-0.5">The focus is on getting shit done — not dopamine from looking at tasks</p>
+          <p className="hidden md:block text-gray-500 text-sm mt-0.5">The focus is on getting shit done — not dopamine from looking at tasks</p>
         </div>
         <div className="flex items-center gap-1 mt-1">
           {/* Tab nav */}
@@ -211,16 +212,16 @@ export default function FocusView() {
       ) : (
         <div className="flex-1 flex min-h-0">
 
-          {/* Left panel */}
-          <div className="w-52 flex-shrink-0 border-r border-gray-800/50 p-4 flex flex-col gap-3 overflow-y-auto scrollbar-none">
+          {/* Left panel — desktop only */}
+          <div className="hidden md:flex w-52 flex-shrink-0 border-r border-gray-800/50 p-4 flex-col gap-3 overflow-y-auto scrollbar-none">
             <PomodoroTimer />
             <YearProgress />
             <WeekendsLeft />
           </div>
 
-          {/* Main content: task on top, filters hugging the bottom */}
+          {/* Main content */}
           <div className="flex-[2] min-w-0 flex flex-col min-h-0">
-            <div className="flex-1 flex flex-col items-center pt-6 px-4 min-h-0 overflow-y-auto scrollbar-none">
+            <div className="flex-1 flex flex-col items-center pt-4 md:pt-6 px-4 min-h-0 overflow-y-auto scrollbar-none">
               {error && (
                 <div className="w-full max-w-xl mb-4 bg-red-950/50 border border-red-800 text-red-300 rounded-xl px-4 py-3 text-sm flex items-center justify-between">
                   <span>{error}</span>
@@ -268,6 +269,23 @@ export default function FocusView() {
               ) : (
                 <EmptyState hasFilters={hasFilters} />
               )}
+
+              {/* Mobile-only: key stats + trend below the task */}
+              <div className="md:hidden w-full max-w-xl">
+                <MobileStats
+                  stats={stats}
+                  isLoading={statsLoading}
+                  totalSkipped={totalSkipped}
+                  allTasks={allTasks}
+                />
+
+                {/* Pomodoro / Year / Weekends — scroll to */}
+                <div className="flex flex-col gap-3 mt-3 pb-8">
+                  <PomodoroTimer />
+                  <YearProgress />
+                  <WeekendsLeft />
+                </div>
+              </div>
             </div>
 
             {activeTab === 'focus' && (
@@ -284,8 +302,8 @@ export default function FocusView() {
             )}
           </div>
 
-          {/* Stats panel */}
-          <div className="w-52 flex-shrink-0 border-l border-gray-800/50 p-4 flex flex-col overflow-y-auto scrollbar-none">
+          {/* Stats panel — desktop only */}
+          <div className="hidden md:flex w-52 flex-shrink-0 border-l border-gray-800/50 p-4 flex-col overflow-y-auto scrollbar-none">
             <StatsWidget
               stats={stats}
               isLoading={statsLoading}
