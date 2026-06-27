@@ -15,7 +15,7 @@ function formatShortDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default function TrendGraph({ entries, showAdded = true, height = 72, vw = 280 }: Props) {
+export default function TrendGraph({ entries, showAdded = true, height = 88, vw = 280 }: Props) {
   const [hover, setHover] = useState<number | null>(null)
 
   if (entries.length < 2) {
@@ -28,7 +28,7 @@ export default function TrendGraph({ entries, showAdded = true, height = 72, vw 
 
   const W = vw
   const H = height
-  const PAD = { top: 12, right: 12, bottom: 18, left: 30 }
+  const PAD = { top: 22, right: 12, bottom: 18, left: 30 }
   const innerW = W - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
 
@@ -99,12 +99,29 @@ export default function TrendGraph({ entries, showAdded = true, height = 72, vw 
           <line x1={hp.x} y1={PAD.top} x2={hp.x} y2={PAD.top + innerH} stroke="#6366f1" strokeWidth="0.75" strokeDasharray="2 2" />
         )}
 
-        {/* Data dots */}
-        {points.map((p, i) => (
-          <circle key={p.date} cx={p.x} cy={p.y} r={hover === i ? 4 : i === points.length - 1 ? 3 : 2}
-            fill={hover === i ? '#fff' : i === points.length - 1 ? trendColor : '#6366f1'}
-            stroke={i === points.length - 1 ? '#1e1b4b' : 'none'} strokeWidth="1" />
-        ))}
+        {/* Data dots + always-visible count labels */}
+        {points.map((p, i) => {
+          const isLast = i === points.length - 1
+          const isHovered = hover === i
+          return (
+            <g key={p.date}>
+              <circle cx={p.x} cy={p.y} r={isHovered ? 4 : isLast ? 3 : 2}
+                fill={isHovered ? '#fff' : isLast ? trendColor : '#6366f1'}
+                stroke={isLast ? '#1e1b4b' : 'none'} strokeWidth="1" />
+              <text
+                x={p.x}
+                y={p.y - 6}
+                textAnchor="middle"
+                dominantBaseline="auto"
+                fontSize="9"
+                fontWeight={isLast ? '700' : '500'}
+                fill={isLast ? trendColor : '#9ca3af'}
+              >
+                {p.count}
+              </text>
+            </g>
+          )
+        })}
 
         {/* Invisible wide hit targets */}
         {points.map((p, i) => (
