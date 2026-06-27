@@ -115,9 +115,18 @@ export default function FocusView() {
   return (
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-gray-950 flex flex-col" data-theme={theme}>
       <header className="px-4 md:px-6 pt-6 md:pt-8 pb-3 md:pb-4 flex items-start justify-between flex-shrink-0">
-        <div>
-          <h1 className="text-white text-xl font-semibold tracking-tight">One Task View</h1>
-          <p className="hidden md:block text-gray-500 text-sm mt-0.5">The focus is on getting shit done — not dopamine from looking at tasks</p>
+        <div className="flex items-center gap-3">
+          {/* Logo */}
+          <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+            <circle cx="50" cy="50" r="46" stroke="#1e3a8a" strokeWidth="4"/>
+            <path d="M45 25V75H55V25H45Z" fill="#1e3a8a"/>
+            <path d="M40 35L45 25H55L45 35H40Z" fill="#172554"/>
+          </svg>
+          {/* Title — hidden on mobile */}
+          <div className="hidden md:block">
+            <h1 className="text-white text-xl font-semibold tracking-tight">One Task View</h1>
+            <p className="text-gray-500 text-sm mt-0.5">The focus is on getting shit done — not dopamine from looking at tasks</p>
+          </div>
         </div>
         <div className="flex items-center gap-1 mt-1">
           {/* Tab nav */}
