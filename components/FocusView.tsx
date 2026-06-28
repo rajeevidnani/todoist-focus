@@ -153,6 +153,9 @@ export default function FocusView() {
             {([
               { id: 'focus' as Tab, label: 'Focus' },
               { id: 'overdue' as Tab, label: 'Overdue', badge: overdueCount || undefined },
+              { id: 'all-tasks' as Tab, label: 'All Tasks' },
+              { id: 'vs-quick' as Tab, label: 'Quick VS' },
+              { id: 'vs-bracket' as Tab, label: 'Bracket' },
               { id: 'analytics' as Tab, label: 'Analytics' },
             ]).map(t => (
               <button
