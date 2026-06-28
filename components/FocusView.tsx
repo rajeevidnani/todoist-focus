@@ -61,6 +61,9 @@ export default function FocusView() {
 
   const today = localToday()
   const overdueCount = allTasks.filter(t => t.due && t.due.date < today).length
+  const focusTasks = allTasks.filter(
+    t => !t.labels.includes('♻️🤓') && !t.labels.includes('really_waiting')
+  )
 
   function toggleProject(id: string) {
     setSelectedProjectIds(prev => {
@@ -243,7 +246,7 @@ export default function FocusView() {
       ) : activeTab === 'all-tasks' ? (
         /* All Tasks — full width, internally scrollable */
         <div className="flex-1 flex flex-col min-h-0 pt-4">
-          <AllTasksView allTasks={allTasks} projects={projects} onCloseTask={closeAnyTask} />
+          <AllTasksView allTasks={focusTasks} projects={projects} onCloseTask={closeAnyTask} />
           <FilterBar
             projects={projects} labels={labels}
             selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
@@ -253,7 +256,7 @@ export default function FocusView() {
       ) : activeTab === 'vs-quick' ? (
         /* Quick VS — full width */
         <div className="flex-1 flex flex-col min-h-0">
-          <VSQuickView allTasks={allTasks} projects={projects} onPickWinner={loadTaskInFocus} />
+          <VSQuickView allTasks={focusTasks} projects={projects} onPickWinner={loadTaskInFocus} />
           <FilterBar
             projects={projects} labels={labels}
             selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
@@ -263,7 +266,7 @@ export default function FocusView() {
       ) : activeTab === 'vs-bracket' ? (
         /* Tournament Bracket — full width */
         <div className="flex-1 flex flex-col min-h-0">
-          <VSBracketView allTasks={allTasks} projects={projects} onChampion={loadTaskInFocus} />
+          <VSBracketView allTasks={focusTasks} projects={projects} onChampion={loadTaskInFocus} />
           <FilterBar
             projects={projects} labels={labels}
             selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
