@@ -2,6 +2,7 @@ export interface TodoistTask {
   id: string
   content: string
   description: string
+  added_at: string // ISO 8601 — used for age heat map
   due: {
     date: string
     datetime: string | null

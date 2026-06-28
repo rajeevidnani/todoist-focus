@@ -19,6 +19,9 @@ import YearProgress from './YearProgress'
 import WeekendsLeft from './WeekendsLeft'
 import AnalyticsView from './AnalyticsView'
 import MobileStats from './MobileStats'
+import AllTasksView from './AllTasksView'
+import VSQuickView from './VSQuickView'
+import VSBracketView from './VSBracketView'
 
 const THEMES: { value: import('@/hooks/useTheme').Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
@@ -99,6 +102,22 @@ export default function FocusView() {
       setAnimState('idle')
       handleSkip()
     }, 720)
+  }
+
+  async function closeAnyTask(id: string) {
+    try {
+      await fetch(`/api/tasks/${id}/close`, { method: 'POST' })
+      removeTask(id)
+      refreshStats()
+    } catch {}
+  }
+
+  function loadTaskInFocus(task: import('@/lib/types').TodoistTask) {
+    // Push the chosen task to the front of the queue by temporarily
+    // making it the only selected item via refreshAll — simplest approach
+    // is just to switch to Focus tab; the task will appear when queue re-derives.
+    // For VS: set the task as pinned currentTask by switching tab.
+    setActiveTab('focus')
   }
 
   function onReschedule(date: string) {
@@ -216,6 +235,36 @@ export default function FocusView() {
             totalSkipped={totalSkipped}
             allTasks={allTasks}
             projects={projects}
+          />
+        </div>
+      ) : activeTab === 'all-tasks' ? (
+        /* All Tasks — full width, internally scrollable */
+        <div className="flex-1 flex flex-col min-h-0 pt-4">
+          <AllTasksView allTasks={allTasks} projects={projects} onCloseTask={closeAnyTask} />
+          <FilterBar
+            projects={projects} labels={labels}
+            selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
+            onToggleProject={toggleProject} onToggleLabel={toggleLabel} onTogglePriority={togglePriority}
+          />
+        </div>
+      ) : activeTab === 'vs-quick' ? (
+        /* Quick VS — full width */
+        <div className="flex-1 flex flex-col min-h-0">
+          <VSQuickView allTasks={allTasks} projects={projects} onPickWinner={loadTaskInFocus} />
+          <FilterBar
+            projects={projects} labels={labels}
+            selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
+            onToggleProject={toggleProject} onToggleLabel={toggleLabel} onTogglePriority={togglePriority}
+          />
+        </div>
+      ) : activeTab === 'vs-bracket' ? (
+        /* Tournament Bracket — full width */
+        <div className="flex-1 flex flex-col min-h-0">
+          <VSBracketView allTasks={allTasks} projects={projects} onChampion={loadTaskInFocus} />
+          <FilterBar
+            projects={projects} labels={labels}
+            selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
+            onToggleProject={toggleProject} onToggleLabel={toggleLabel} onTogglePriority={togglePriority}
           />
         </div>
       ) : (
