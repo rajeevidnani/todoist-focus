@@ -38,6 +38,7 @@ export default function FocusView() {
   const [selectedLabelNames, setSelectedLabelNames] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(new Set())
   const [hideWaiting, setHideWaiting] = useState(false)
+  const [hideRecurring, setHideRecurring] = useState(false)
   const [animState, setAnimState] = useState<'idle' | 'done' | 'skip'>('idle')
 
   const { labels } = useLabels()
@@ -57,7 +58,7 @@ export default function FocusView() {
     rescheduleTask,
     refreshAll,
     clearError,
-  } = useTaskQueue(selectedProjectIds, selectedLabelNames, selectedPriorities, projects, hideWaiting)
+  } = useTaskQueue(selectedProjectIds, selectedLabelNames, selectedPriorities, projects, hideWaiting, hideRecurring)
 
   const today = localToday()
   const overdueCount = allTasks.filter(t => t.due && t.due.date < today).length
@@ -318,17 +319,30 @@ export default function FocusView() {
                     activeEmojis={skipEmojis}
                     onToggleEmoji={toggleEmoji}
                   />
-                  <button
-                    onClick={() => setHideWaiting(v => !v)}
-                    className={`mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      hideWaiting
-                        ? 'bg-gray-800 text-gray-300 hover:text-white'
-                        : 'text-gray-600 hover:text-gray-400'
-                    }`}
-                    title="Toggle whether really_waiting tasks appear in the queue"
-                  >
-                    {hideWaiting ? '🙈 really_waiting hidden' : '👀 really_waiting showing'}
-                  </button>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={() => setHideWaiting(v => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        hideWaiting
+                          ? 'bg-gray-800 text-gray-300 hover:text-white'
+                          : 'text-gray-600 hover:text-gray-400'
+                      }`}
+                      title="Toggle whether really_waiting tasks appear in the queue"
+                    >
+                      {hideWaiting ? '🙈 really_waiting hidden' : '👀 really_waiting showing'}
+                    </button>
+                    <button
+                      onClick={() => setHideRecurring(v => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        hideRecurring
+                          ? 'bg-gray-800 text-gray-300 hover:text-white'
+                          : 'text-gray-600 hover:text-gray-400'
+                      }`}
+                      title="Toggle whether ♻️🤓 recurring tasks appear in the queue"
+                    >
+                      {hideRecurring ? '🙈 ♻️🤓 hidden' : '👀 ♻️🤓 showing'}
+                    </button>
+                  </div>
                 </>
               ) : (
                 <EmptyState hasFilters={hasFilters} />
