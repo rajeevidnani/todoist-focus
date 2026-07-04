@@ -44,6 +44,7 @@ export function useTaskQueue(
   selectedPriorities: Set<number>,
   projects: TodoistProject[],
   hideWaiting: boolean = false,
+  hideRecurring: boolean = false,
 ) {
   const [globalTasks, setGlobalTasks] = useState<TodoistTask[]>([])
   const [queue, setQueue] = useState<TodoistTask[]>([])
@@ -79,12 +80,13 @@ export function useTaskQueue(
       .filter(t => selectedLabelNames.size === 0 || t.labels.some(l => selectedLabelNames.has(l)))
       .filter(t => selectedPriorities.size === 0 || selectedPriorities.has(t.priority))
       .filter(t => !hideWaiting || !t.labels.includes(WAITING_LABEL))
+      .filter(t => !hideRecurring || !t.due?.is_recurring)
     const skipped = skippedIdsRef.current
     setQueue([
       ...filtered.filter(t => !skipped.has(t.id)),
       ...filtered.filter(t => skipped.has(t.id)),
     ])
-  }, [globalTasks, selectedProjectIds, selectedLabelNames, selectedPriorities, hideWaiting])
+  }, [globalTasks, selectedProjectIds, selectedLabelNames, selectedPriorities, hideWaiting, hideRecurring])
 
   const allTasks = globalTasks
   const currentTask = queue[0] ?? null

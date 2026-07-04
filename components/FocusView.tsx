@@ -63,7 +63,7 @@ export default function FocusView() {
   const today = localToday()
   const overdueCount = allTasks.filter(t => t.due && t.due.date < today).length
   const focusTasks = allTasks.filter(
-    t => !t.labels.includes('♻️🤓') && !t.labels.includes('really_waiting')
+    t => !t.due?.is_recurring && !t.labels.includes('really_waiting')
   )
 
   function toggleProject(id: string) {
@@ -338,9 +338,9 @@ export default function FocusView() {
                           ? 'bg-gray-800 text-gray-300 hover:text-white'
                           : 'text-gray-600 hover:text-gray-400'
                       }`}
-                      title="Toggle whether ♻️🤓 recurring tasks appear in the queue"
+                      title="Toggle whether recurring tasks appear in the queue"
                     >
-                      {hideRecurring ? '🙈 ♻️🤓 hidden' : '👀 ♻️🤓 showing'}
+                      {hideRecurring ? '🙈 recurring hidden' : '👀 recurring showing'}
                     </button>
                   </div>
                 </>
