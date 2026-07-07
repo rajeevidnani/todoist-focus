@@ -16,10 +16,10 @@ interface Props {
 
 export default function MobileStats({ stats, isLoading, totalSkipped, allTasks }: Props) {
   const done = stats?.completed_today ?? 0
-  const focusCount = allTasks.filter(
-    t => !t.labels.includes(RECURRING_LABEL) && !t.labels.includes(WAITING_LABEL)
-  ).length
-  const logEntries = useDailyLog(isLoading ? null : focusCount, done)
+  const focusTasks = allTasks.filter(t => !t.due?.is_recurring && !t.labels.includes(WAITING_LABEL))
+  const focusCount = focusTasks.length
+  const taskIds = isLoading ? [] : focusTasks.map(t => t.id)
+  const logEntries = useDailyLog(isLoading ? null : focusCount, done, taskIds)
 
   return (
     <div className="w-full flex flex-col gap-3 mt-4 pb-2">

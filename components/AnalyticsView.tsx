@@ -130,14 +130,14 @@ function BarList({ items, max, labelClass = 'w-16' }: { items: { label: string; 
 
 export default function AnalyticsView({ stats, isLoading, totalSkipped, allTasks, projects }: Props) {
   const done = stats?.completed_today ?? 0
-  const recurringCount = allTasks.filter(t => t.labels.includes(RECURRING_LABEL)).length
+  const recurringCount = allTasks.filter(t => t.due?.is_recurring).length
   const waitingCount = allTasks.filter(t => t.labels.includes(WAITING_LABEL)).length
   const totalCount = allTasks.length
-  const focusCount = allTasks.filter(
-    t => !t.labels.includes(RECURRING_LABEL) && !t.labels.includes(WAITING_LABEL)
-  ).length
+  const focusTasks = allTasks.filter(t => !t.due?.is_recurring && !t.labels.includes(WAITING_LABEL))
+  const focusCount = focusTasks.length
+  const taskIds = isLoading ? [] : focusTasks.map(t => t.id)
 
-  const logEntries = useDailyLog(isLoading ? null : focusCount, done)
+  const logEntries = useDailyLog(isLoading ? null : focusCount, done, taskIds)
 
   // Open by priority (P1=4 … P4=1)
   const priorityItems = [4, 3, 2, 1].map(p => ({

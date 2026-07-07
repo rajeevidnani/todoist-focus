@@ -7,9 +7,9 @@ const STORAGE_KEY = 'daily-task-log'
 
 export interface LogEntry {
   date: string
-  count: number      // focusCount at last snapshot
-  completed: number  // completed_today at last snapshot
-  added: number      // derived: (count - prev.count) + completed
+  count: number
+  completed: number
+  added: number
 }
 
 interface StoredEntry {
@@ -40,14 +40,23 @@ function writeLocal(log: Record<string, StoredEntry>) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(log)) } catch {}
 }
 
-function toEntries(log: Record<string, StoredEntry>): LogEntry[] {
+function toEntries(log: Record<string, StoredEntry>, addedToday: number | null): LogEntry[] {
   const sorted = Object.entries(log)
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-30)
 
+  const today = localToday()
+
   return sorted.map(([date, { count, completed }], i) => {
-    const prev = i > 0 ? sorted[i - 1][1].count : null
-    const added = prev !== null ? (count - prev) + completed : 0
+    let added: number
+    if (date === today && addedToday !== null) {
+      // Use the accurate server-derived count for today
+      added = addedToday
+    } else {
+      // Fall back to derived formula for historical days
+      const prev = i > 0 ? sorted[i - 1][1].count : null
+      added = prev !== null ? Math.max(0, (count - prev) + completed) : 0
+    }
     return { date, count, completed, added }
   })
 }
@@ -62,7 +71,7 @@ async function fetchServerLog(): Promise<Record<string, StoredEntry>> {
   }
 }
 
-async function pushToServer(log: Record<string, StoredEntry>) {
+async function pushTrendLog(log: Record<string, StoredEntry>) {
   try {
     await fetch('/api/trend-log', {
       method: 'POST',
@@ -72,18 +81,35 @@ async function pushToServer(log: Record<string, StoredEntry>) {
   } catch {}
 }
 
-export function useDailyLog(focusCount: number | null, completedToday: number): LogEntry[] {
-  const [entries, setEntries] = useState<LogEntry[]>([])
+async function pushTaskSnapshot(date: string, ids: string[]): Promise<number | null> {
+  try {
+    const res = await fetch('/api/task-snapshot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, ids }),
+    })
+    const data = await res.json()
+    return typeof data.added === 'number' ? data.added : null
+  } catch {
+    return null
+  }
+}
 
-  // On mount: load local, then fetch server and merge (server wins on best narrative)
+export function useDailyLog(
+  focusCount: number | null,
+  completedToday: number,
+  taskIds: string[] = [],
+): LogEntry[] {
+  const [entries, setEntries] = useState<LogEntry[]>([])
+  const [addedToday, setAddedToday] = useState<number | null>(null)
+
+  // On mount: load local, then sync with server
   useEffect(() => {
     const local = readLocal()
-    setEntries(toEntries(local))
+    setEntries(toEntries(local, null))
 
     fetchServerLog().then(server => {
       if (Object.keys(server).length === 0) return
-      // Merge local into server (server already has best-narrative logic applied)
-      // For any date, keep whichever has lower count (more growth shown)
       const merged = { ...server }
       for (const [date, entry] of Object.entries(local)) {
         if (entry.count > 0 && (!merged[date] || merged[date].count === 0 || entry.count < merged[date].count)) {
@@ -91,20 +117,38 @@ export function useDailyLog(focusCount: number | null, completedToday: number): 
         }
       }
       writeLocal(merged)
-      setEntries(toEntries(merged))
+      setEntries(toEntries(merged, null))
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // When focusCount updates: write today's snapshot locally and push to server
+  // When tasks load: push snapshot to get accurate added count
+  useEffect(() => {
+    if (taskIds.length === 0) return
+    const today = localToday()
+    pushTaskSnapshot(today, taskIds).then(added => {
+      if (added !== null) setAddedToday(added)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskIds.join(',')])
+
+  // When focusCount updates: write today's snapshot locally and push trend log
   useEffect(() => {
     if (focusCount === null || focusCount === 0) return
     const log = readLocal()
     log[localToday()] = { count: focusCount, completed: completedToday }
     writeLocal(log)
-    setEntries(toEntries(log))
-    pushToServer(log)
+    setEntries(toEntries(log, addedToday))
+    pushTrendLog(log)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusCount, completedToday])
+
+  // Re-derive entries when addedToday resolves
+  useEffect(() => {
+    if (addedToday === null) return
+    const log = readLocal()
+    setEntries(toEntries(log, addedToday))
+  }, [addedToday])
 
   return entries
 }

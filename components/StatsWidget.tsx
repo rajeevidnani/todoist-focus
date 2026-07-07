@@ -17,14 +17,14 @@ const WAITING_LABEL = 'really_waiting'
 export default function StatsWidget({ stats, isLoading, totalSkipped, queueLength, allTasks, projects }: Props) {
   const done = stats?.completed_today ?? 0
 
-  const recurringCount = allTasks.filter(t => t.labels.includes(RECURRING_LABEL)).length
+  const recurringCount = allTasks.filter(t => t.due?.is_recurring).length
   const waitingCount = allTasks.filter(t => t.labels.includes(WAITING_LABEL)).length
   const totalCount = allTasks.length
-  const focusCount = allTasks.filter(
-    t => !t.labels.includes(RECURRING_LABEL) && !t.labels.includes(WAITING_LABEL)
-  ).length
+  const focusTasks = allTasks.filter(t => !t.due?.is_recurring && !t.labels.includes(WAITING_LABEL))
+  const focusCount = focusTasks.length
+  const taskIds = isLoading ? [] : focusTasks.map(t => t.id)
 
-  const logEntries = useDailyLog(isLoading ? null : focusCount, done)
+  const logEntries = useDailyLog(isLoading ? null : focusCount, done, taskIds)
 
   const projectCounts = projects
     .map(p => ({
