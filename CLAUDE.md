@@ -97,6 +97,26 @@ Writes go via `PATCH https://api.vercel.com/v1/edge-config/{id}/items` using `VE
 | `VERCEL_TOKEN` | Vercel (Prod+Preview) + local `.env.local` | Edge Config writes |
 | `EDGE_CONFIG` | Auto-set by Vercel | Edge Config read URL |
 
+## Agent skills — use proactively
+
+These skills are available and should be suggested at the right moments. Don't wait for Rajeev to ask.
+
+| When | Do this |
+|------|---------|
+| After finishing a feature | Ask: "Want me to run `/verify` to confirm it works in the browser?" |
+| Before pushing | Ask: "Should I run `/qa` for a quick pass first?" |
+| After `git push origin main` | Immediately run the `vercel-build-monitor` scheduled agent to check deployment status. Report ✅ READY, 🔨 BUILDING, or ❌ ERROR. |
+| Something looks broken | Suggest `/investigate` |
+| Code review before merging | Suggest `/review` |
+| End of a session | Check the backlog below and ask: "Want to tackle anything from the backlog next?" |
+
+To run the Vercel build monitor after pushing:
+```bash
+curl -s "https://api.vercel.com/v6/deployments?projectId=prj_bkViz2ieVYlocXXChVkvYZoLSEBz&teamId=team_B2pwiv1A2rTbj7TuNywoLyzC&limit=1" \
+  -H "Authorization: Bearer $VERCEL_TOKEN"
+```
+Parse `state`: READY ✅ / BUILDING 🔨 / ERROR ❌. If building, poll every 15s up to 3 times.
+
 ## Backlog
 - [ ] Mobile tab bar horizontal scroll fix
 - [ ] Animations & polish
