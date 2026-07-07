@@ -11,7 +11,9 @@ type Log = Record<string, StoredEntry>
 export async function GET() {
   try {
     const log = (await get<Log>(KEY)) ?? {}
-    return NextResponse.json(log)
+    // Strip any zero-count entries written before the guard was added
+    const clean = Object.fromEntries(Object.entries(log).filter(([, v]) => v.count > 0))
+    return NextResponse.json(clean)
   } catch {
     return NextResponse.json({})
   }
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
     // (smaller backlog = more growth shown).
     const merged: Log = { ...existing }
     for (const [date, entry] of Object.entries(body)) {
-      if (!merged[date] || entry.count < merged[date].count) {
+      if (entry.count > 0 && (!merged[date] || merged[date].count === 0 || entry.count < merged[date].count)) {
         merged[date] = entry
       }
     }

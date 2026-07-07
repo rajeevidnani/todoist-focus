@@ -86,7 +86,7 @@ export function useDailyLog(focusCount: number | null, completedToday: number): 
       // For any date, keep whichever has lower count (more growth shown)
       const merged = { ...server }
       for (const [date, entry] of Object.entries(local)) {
-        if (!merged[date] || entry.count < merged[date].count) {
+        if (entry.count > 0 && (!merged[date] || merged[date].count === 0 || entry.count < merged[date].count)) {
           merged[date] = entry
         }
       }
@@ -98,7 +98,7 @@ export function useDailyLog(focusCount: number | null, completedToday: number): 
 
   // When focusCount updates: write today's snapshot locally and push to server
   useEffect(() => {
-    if (focusCount === null) return
+    if (focusCount === null || focusCount === 0) return
     const log = readLocal()
     log[localToday()] = { count: focusCount, completed: completedToday }
     writeLocal(log)
