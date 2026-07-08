@@ -84,7 +84,7 @@ export default function StatsWidget({ stats, isLoading, totalSkipped, queueLengt
         )}
 
         <div className="border-t border-gray-800 mt-4 pt-4">
-          <TrendGraph entries={logEntries} />
+          <TrendGraph entries={logEntries.slice(-7)} />
         </div>
       </div>
 
