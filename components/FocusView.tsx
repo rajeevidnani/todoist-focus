@@ -22,6 +22,7 @@ import MobileStats from './MobileStats'
 import AllTasksView from './AllTasksView'
 import VSQuickView from './VSQuickView'
 import VSBracketView from './VSBracketView'
+import FamilyView from './FamilyView'
 
 const THEMES: { value: import('@/hooks/useTheme').Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
@@ -161,6 +162,7 @@ export default function FocusView() {
               { id: 'vs-quick' as Tab, label: 'Quick VS' },
               { id: 'vs-bracket' as Tab, label: 'Bracket' },
               { id: 'analytics' as Tab, label: 'Analytics' },
+              { id: 'family' as Tab, label: 'Family' },
             ]).map(t => (
               <button
                 key={t.id}
@@ -244,6 +246,8 @@ export default function FocusView() {
             projects={projects}
           />
         </div>
+      ) : activeTab === 'family' ? (
+        <FamilyView />
       ) : activeTab === 'all-tasks' ? (
         /* All Tasks — full width, internally scrollable */
         <div className="flex-1 flex flex-col min-h-0 pt-4">

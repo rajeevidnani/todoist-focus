@@ -1,4 +1,4 @@
-export type Tab = 'focus' | 'overdue' | 'all-tasks' | 'vs-quick' | 'vs-bracket' | 'analytics'
+export type Tab = 'focus' | 'overdue' | 'all-tasks' | 'vs-quick' | 'vs-bracket' | 'analytics' | 'family'
 
 interface Props {
   activeTab: Tab
