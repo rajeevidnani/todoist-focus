@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface FamilyMember {
   id: string
@@ -8,7 +8,7 @@ interface FamilyMember {
   lastSeen: string // YYYY-MM-DD
 }
 
-const STORAGE_KEY = 'otv_family'
+const STORAGE_KEY = 'otv_family_cache'
 
 const DEFAULTS: FamilyMember[] = [
   { id: 'sneha',  name: 'Sneha',  lastSeen: '2026-07-24' },
@@ -37,8 +37,7 @@ function statusColor(days: number): string {
   if (days < 30)  return 'text-emerald-400'
   if (days < 90)  return 'text-yellow-400'
   if (days < 180) return 'text-orange-400'
-  if (days < 365) return 'text-red-400'
-  return 'text-red-500'
+  return 'text-red-400'
 }
 
 function statusBg(days: number): string {
@@ -59,25 +58,49 @@ function daysLabel(days: number): string {
   return `${Math.floor(days / 365)}y ${Math.floor((days % 365) / 30)}m ago`
 }
 
+// Merge API data (Record<id, date>) into the members array
+function applyDates(members: FamilyMember[], dates: Record<string, string>): FamilyMember[] {
+  return members.map(m => dates[m.id] ? { ...m, lastSeen: dates[m.id] } : m)
+}
+
 export default function FamilyView() {
   const [members, setMembers] = useState<FamilyMember[]>(DEFAULTS)
   const [editing, setEditing] = useState<string | null>(null)
   const [editDate, setEditDate] = useState('')
+  const [syncing, setSyncing] = useState(false)
 
+  // Load: check localStorage cache first for instant render, then fetch from Edge Config
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setMembers(JSON.parse(stored))
+      const cached = localStorage.getItem(STORAGE_KEY)
+      if (cached) setMembers(applyDates(DEFAULTS, JSON.parse(cached)))
     } catch {}
+
+    fetch('/api/family')
+      .then(r => r.json())
+      .then((data: Record<string, string>) => {
+        if (Object.keys(data).length > 0) {
+          setMembers(applyDates(DEFAULTS, data))
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch {}
+        }
+      })
+      .catch(() => {})
   }, [])
 
-  function save(updated: FamilyMember[]) {
+  const persist = useCallback((updated: FamilyMember[]) => {
     setMembers(updated)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-  }
+    const dates = Object.fromEntries(updated.map(m => [m.id, m.lastSeen]))
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dates)) } catch {}
+    setSyncing(true)
+    fetch('/api/family', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dates),
+    }).finally(() => setSyncing(false))
+  }, [])
 
   function sawToday(id: string) {
-    save(members.map(m => m.id === id ? { ...m, lastSeen: today() } : m))
+    persist(members.map(m => m.id === id ? { ...m, lastSeen: today() } : m))
   }
 
   function startEdit(m: FamilyMember) {
@@ -86,7 +109,7 @@ export default function FamilyView() {
   }
 
   function commitEdit(id: string) {
-    if (editDate) save(members.map(m => m.id === id ? { ...m, lastSeen: editDate } : m))
+    if (editDate) persist(members.map(m => m.id === id ? { ...m, lastSeen: editDate } : m))
     setEditing(null)
   }
 
@@ -111,12 +134,10 @@ export default function FamilyView() {
               key={m.id}
               className={`rounded-2xl border px-4 py-4 flex items-center gap-4 ${statusBg(days)}`}
             >
-              {/* Avatar */}
               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
                 <span className="text-gray-300 font-semibold text-sm">{m.name[0]}</span>
               </div>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-white font-medium text-sm">{m.name}</p>
                 {isEditing ? (
@@ -152,11 +173,9 @@ export default function FamilyView() {
                 )}
               </div>
 
-              {/* Saw today button */}
               {!isEditing && (
                 <button
                   onClick={() => sawToday(m.id)}
-                  title="Saw them today"
                   className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-xs font-medium transition-colors"
                 >
                   Saw today
@@ -167,7 +186,7 @@ export default function FamilyView() {
         })}
 
         <p className="text-gray-700 text-xs text-center mt-2">
-          Tap a date to edit · "Saw today" sets it to now
+          {syncing ? '⟳ Syncing…' : 'Tap a date to edit · "Saw today" syncs across all devices'}
         </p>
       </div>
     </div>
