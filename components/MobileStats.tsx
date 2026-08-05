@@ -1,10 +1,9 @@
 'use client'
 
 import { ProductivityStats, TodoistTask } from '@/lib/types'
-import { useDailyLog } from '@/hooks/useDailyLog'
+import { LogEntry } from '@/hooks/useDailyLog'
 import TrendGraph from './TrendGraph'
 
-const RECURRING_LABEL = '♻️🤓'
 const WAITING_LABEL = 'really_waiting'
 
 interface Props {
@@ -12,14 +11,13 @@ interface Props {
   isLoading: boolean
   totalSkipped: number
   allTasks: TodoistTask[]
+  logEntries: LogEntry[]
 }
 
-export default function MobileStats({ stats, isLoading, totalSkipped, allTasks }: Props) {
+export default function MobileStats({ stats, isLoading, totalSkipped, allTasks, logEntries }: Props) {
   const done = stats?.completed_today ?? 0
   const focusTasks = allTasks.filter(t => !t.due?.is_recurring && !t.labels.includes(WAITING_LABEL))
   const focusCount = focusTasks.length
-  const taskIds = isLoading ? [] : focusTasks.map(t => t.id)
-  const logEntries = useDailyLog(isLoading ? null : focusCount, done, taskIds)
 
   return (
     <div className="w-full flex flex-col gap-3 mt-4 pb-2">

@@ -2,11 +2,14 @@
 
 import { useMemo, useState } from 'react'
 import { TodoistTask, TodoistProject } from '@/lib/types'
+import { LogEntry } from '@/hooks/useDailyLog'
+import TrendGraph from './TrendGraph'
 
 interface Props {
   allTasks: TodoistTask[]
   projects: TodoistProject[]
   onCloseTask: (id: string) => void
+  logEntries: LogEntry[]
 }
 
 const BUCKETS = [
@@ -186,7 +189,7 @@ function Column({ bucket, tasks, projects, onCloseTask, onExpand }: {
 }
 
 // ── Main view ──────────────────────────────────────────────────────────────
-export default function AllTasksView({ allTasks, projects, onCloseTask }: Props) {
+export default function AllTasksView({ allTasks, projects, onCloseTask, logEntries }: Props) {
   const [selected, setSelected] = useState<TodoistTask | null>(null)
 
   const bucketed = useMemo(() => {
@@ -199,11 +202,33 @@ export default function AllTasksView({ allTasks, projects, onCloseTask }: Props)
     return out
   }, [allTasks])
 
+  const recentEntries = logEntries.slice(-14)
+  const last = recentEntries[recentEntries.length - 1]
+  const prev = recentEntries[recentEntries.length - 2]
+  const trend = last && prev ? (last.count < prev.count ? 'down' : last.count > prev.count ? 'up' : 'flat') : 'flat'
+  const trendColor = trend === 'down' ? '#34d399' : trend === 'up' ? '#f87171' : '#9ca3af'
+
   return (
     <>
       <div className="flex-1 flex flex-col min-h-0 px-4 pt-2 pb-1">
-        <div className="flex items-center gap-2 mb-2 flex-shrink-0">
-          <span className="text-gray-500 text-xs">{allTasks.length} remaining · click any task to see details</span>
+        {/* Header: big count + trend graph */}
+        <div className="flex items-center gap-6 mb-3 flex-shrink-0 px-1">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-white tabular-nums leading-none">{allTasks.length}</div>
+              <div className="text-gray-500 text-xs mt-1">remaining · <span className="text-gray-600">click to see details</span></div>
+            </div>
+          </div>
+          {recentEntries.length >= 2 && (
+            <div className="flex-1 min-w-0 max-w-xs">
+              <TrendGraph entries={recentEntries} showAdded={false} height={64} vw={220} />
+            </div>
+          )}
         </div>
         <div className="flex gap-3 flex-1 min-h-0">
           {BUCKETS.map(b => (

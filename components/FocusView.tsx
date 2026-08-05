@@ -23,6 +23,7 @@ import AllTasksView from './AllTasksView'
 import VSQuickView from './VSQuickView'
 import VSBracketView from './VSBracketView'
 import FamilyView from './FamilyView'
+import { useDailyLog, LogEntry } from '@/hooks/useDailyLog'
 
 const THEMES: { value: import('@/hooks/useTheme').Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
@@ -66,6 +67,8 @@ export default function FocusView() {
   const focusTasks = allTasks.filter(
     t => !t.due?.is_recurring && !t.labels.includes('really_waiting')
   )
+  const done = stats?.completed_today ?? 0
+  const logEntries = useDailyLog(isLoading ? null : focusTasks.length, done, isLoading ? [] : focusTasks.map(t => t.id))
 
   function toggleProject(id: string) {
     setSelectedProjectIds(prev => {
@@ -251,12 +254,7 @@ export default function FocusView() {
       ) : activeTab === 'all-tasks' ? (
         /* All Tasks — full width, internally scrollable */
         <div className="flex-1 flex flex-col min-h-0 pt-4">
-          <AllTasksView allTasks={focusTasks} projects={projects} onCloseTask={closeAnyTask} />
-          <FilterBar
-            projects={projects} labels={labels}
-            selectedProjectIds={selectedProjectIds} selectedLabelNames={selectedLabelNames} selectedPriorities={selectedPriorities}
-            onToggleProject={toggleProject} onToggleLabel={toggleLabel} onTogglePriority={togglePriority}
-          />
+          <AllTasksView allTasks={focusTasks} projects={projects} onCloseTask={closeAnyTask} logEntries={logEntries} />
         </div>
       ) : activeTab === 'vs-quick' ? (
         /* Quick VS — full width */
@@ -359,6 +357,7 @@ export default function FocusView() {
                   isLoading={statsLoading}
                   totalSkipped={totalSkipped}
                   allTasks={allTasks}
+                  logEntries={logEntries}
                 />
 
                 {/* Pomodoro / Year / Weekends — scroll to */}
@@ -393,6 +392,7 @@ export default function FocusView() {
               queueLength={queue.length}
               allTasks={allTasks}
               projects={projects}
+              logEntries={logEntries}
             />
           </div>
         </div>

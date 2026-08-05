@@ -1,5 +1,5 @@
 import { ProductivityStats, TodoistTask, TodoistProject } from '@/lib/types'
-import { useDailyLog } from '@/hooks/useDailyLog'
+import { LogEntry } from '@/hooks/useDailyLog'
 import TrendGraph from './TrendGraph'
 
 interface Props {
@@ -9,12 +9,13 @@ interface Props {
   queueLength: number
   allTasks: TodoistTask[]
   projects: TodoistProject[]
+  logEntries: LogEntry[]
 }
 
 const RECURRING_LABEL = '♻️🤓'
 const WAITING_LABEL = 'really_waiting'
 
-export default function StatsWidget({ stats, isLoading, totalSkipped, queueLength, allTasks, projects }: Props) {
+export default function StatsWidget({ stats, isLoading, totalSkipped, queueLength, allTasks, projects, logEntries }: Props) {
   const done = stats?.completed_today ?? 0
 
   const recurringCount = allTasks.filter(t => t.due?.is_recurring).length
@@ -22,9 +23,6 @@ export default function StatsWidget({ stats, isLoading, totalSkipped, queueLengt
   const totalCount = allTasks.length
   const focusTasks = allTasks.filter(t => !t.due?.is_recurring && !t.labels.includes(WAITING_LABEL))
   const focusCount = focusTasks.length
-  const taskIds = isLoading ? [] : focusTasks.map(t => t.id)
-
-  const logEntries = useDailyLog(isLoading ? null : focusCount, done, taskIds)
 
   const projectCounts = projects
     .map(p => ({
