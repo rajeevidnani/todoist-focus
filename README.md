@@ -6,7 +6,7 @@ Todoist is excellent at capture and lousy at focus: open it on a busy day and yo
 forty things, which is a reliable way to do none of them. One Task View sits on top of the same
 data and shows a single task, with everything else deliberately out of sight until you deal with it.
 
-Built for my own ADHD brain, and shared in case it fits yours.
+Built for my own brain, and shared in case it fits yours.
 
 ## What it does
 
